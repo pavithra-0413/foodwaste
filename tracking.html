@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Maps Location Tracker</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        
+        #map-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        #header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        #map {
+            flex-grow: 1;
+            width: 100%;
+        }
+        
+        #controls {
+            padding: 10px;
+            background-color: #ecf0f1;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        button, input {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        #search-input {
+            flex-grow: 1;
+            max-width: 300px;
+            border: 1px solid #ddd;
+        }
+        
+        #location-info {
+            padding: 10px;
+            background-color: #f9f9f9;
+            text-align: center;
+        }
+        
+        .distance-info {
+            margin-top: 10px;
+            padding: 8px;
+            background-color: #e8f4f8;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .gm-style .gm-style-iw-c {
+            padding: 10px !important;
+        }
+    </style>
+    <!-- Load Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places"></script>
+</head>
+<body>
+    <div id="map-container">
+        <div id="header">
+            <h1>Google Maps Location Tracker</h1>
+        </div>
+        <div id="map"></div>
+        <div id="location-info">
+            <p>Waiting for location...</p>
+            <div id="distance-container" class="distance-info" style="display: none;"></div>
+        </div>
+        <div id="controls">
+            <input type="text" id="search-input" placeholder="Enter location to search">
+            <button id="search-btn">Search</button>
+            <button id="start-tracking">Start Tracking</button>
+            <button id="stop-tracking">Stop Tracking</button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize variables
+        let map;
+        let userMarker;
+        let destinationMarker;
+        let watchId = null;
+        let currentPosition = null;
+        let directionsService;
+        let directionsRenderer;
+        let autocomplete;
+        
+        // Initialize the map
+        function initMap() {
+            // Default center (will be updated when location is found)
+            const defaultCenter = { lat: 0, lng: 0 };
+            
+            map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 15,
+                center: defaultCenter,
+                mapTypeControl: true,
+                streetViewControl: true,
+                fullscreenControl: true
+            });
+            
+            // Initialize directions service
+            directionsService = new google.maps.DirectionsService();
+            directionsRenderer = new google.maps.DirectionsRenderer({
+                map: map,
+                suppressMarkers: true,
+                polylineOptions: {
+                    strokeColor: '#4285F4',
+                    strokeOpacity: 0.8,
+                    strokeWeight: 4
+                }
+            });
+            
+            // Initialize autocomplete for search input
+            autocomplete = new google.maps.places.Autocomplete(
+                document.getElementById('search-input'),
+                { types: ['geocode', 'establishment'] }
+            );
+            
+            // Add listener for place selection
+            autocomplete.addListener('place_changed', onPlaceChanged);
+        }
+        
+        // Get current location
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    showPosition, 
+                    showError,
+                    { enableHighAccuracy: true }
+                );
+            } else {
+                document.getElementById('location-info').innerHTML = 
+                    "Geolocation is not supported by this browser.";
+            }
+        }
+        
+        // Show position on map
+        function showPosition(position) {
+            currentPosition = position;
+            const pos = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            };
+            
+            // Update location info
+            document.getElementById('location-info').innerHTML = 
+                `Your Location:<br>
+                 Latitude: ${pos.lat.toFixed(6)}<br>
+                 Longitude: ${pos.lng.toFixed(6)}<br>
+                 Accuracy: ${Math.round(position.coords.accuracy)} meters<br>
+                 ${new Date().toLocaleTimeString()}`;
+            
+            // If this is the first position, center the map
+            if (!userMarker) {
+                map.setCenter(pos);
+                
+                // Add marker to map
+                userMarker = new google.maps.Marker({
+                    position: pos,
+                    map: map,
+                    title: "You are here!",
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 8,
+                        fillColor: '#4285F4',
+                        fillOpacity: 1,
+                        strokeColor: '#FFFFFF',
+                        strokeWeight: 2
+                    },
+                    animation: google.maps.Animation.DROP
+                });
+                
+                // Add accuracy circle
+                const circle = new google.maps.Circle({
+                    strokeColor: '#4285F4',
+                    strokeOpacity: 0.4,
+                    strokeWeight: 1,
+                    fillColor: '#4285F4',
+                    fillOpacity: 0.2,
+                    map: map,
+                    center: pos,
+                    radius: position.coords.accuracy
+                });
+            } else {
+                // Update existing marker position
+                userMarker.setPosition(pos);
+                map.panTo(pos);
+            }
+            
+            // If there's a destination marker, update the distance and route
+            if (destinationMarker) {
+                calculateDistanceAndRoute();
+            }
+        }
+        
+        // Handle errors
+        function showError(error) {
+            let errorMessage;
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMessage = "User denied the request for Geolocation.";
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorMessage = "Location information is unavailable.";
+                    break;
+                case error.TIMEOUT:
+                    errorMessage = "The request to get user location timed out.";
+                    break;
+                case error.UNKNOWN_ERROR:
+                    errorMessage = "An unknown error occurred.";
+                    break;
+            }
+            document.getElementById('location-info').innerHTML = errorMessage;
+        }
+        
+        // Start tracking
+        function startTracking() {
+            if (watchId !== null) return;
+            
+            watchId = navigator.geolocation.watchPosition(
+                showPosition, 
+                showError,
+                { 
+                    enableHighAccuracy: true,
+                    maximumAge: 10000,
+                    timeout: 5000
+                }
+            );
+            
+            document.getElementById('location-info').innerHTML += 
+                "<br>Tracking started...";
+        }
+        
+        // Stop tracking
+        function stopTracking() {
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+                document.getElementById('location-info').innerHTML += 
+                    "<br>Tracking stopped.";
+            }
+        }
+        
+        // When a place is selected from autocomplete
+        function onPlaceChanged() {
+            const place = autocomplete.getPlace();
+            if (!place.geometry) {
+                alert("No details available for input: '" + place.name + "'");
+                return;
+            }
+            
+            // If we have a current position, proceed
+            if (currentPosition) {
+                displaySearchedPlace(place);
+            } else {
+                alert("Please wait for your current location to be determined first.");
+            }
+        }
+        
+        // Display the searched place on the map
+        function displaySearchedPlace(place) {
+            // Remove previous destination marker if exists
+            if (destinationMarker) {
+                destinationMarker.setMap(null);
+            }
+            
+            // Create marker for searched place
+            destinationMarker = new google.maps.Marker({
+                map: map,
+                position: place.geometry.location,
+                title: place.name,
+                animation: google.maps.Animation.DROP
+            });
+            
+            // Create info window
+            const infowindow = new google.maps.InfoWindow({
+                content: `<div><strong>${place.name}</strong><br>${place.formatted_address || ''}</div>`
+            });
+            
+            destinationMarker.addListener('click', () => {
+                infowindow.open(map, destinationMarker);
+            });
+            infowindow.open(map, destinationMarker);
+            
+            // Fit map to show both markers
+            const bounds = new google.maps.LatLngBounds();
+            bounds.extend(userMarker.getPosition());
+            bounds.extend(destinationMarker.getPosition());
+            map.fitBounds(bounds);
+            
+            // Calculate distance and show route
+            calculateDistanceAndRoute();
+        }
+        
+        // Calculate distance and show route
+        function calculateDistanceAndRoute() {
+            if (!currentPosition || !destinationMarker) return;
+            
+            const origin = userMarker.getPosition();
+            const destination = destinationMarker.getPosition();
+            
+            // Calculate straight-line distance
+            const distance = google.maps.geometry.spherical.computeDistanceBetween(origin, destination);
+            
+            // Display distance
+            const distanceContainer = document.getElementById('distance-container');
+            distanceContainer.style.display = 'block';
+            
+            if (distance > 1000) {
+                distanceContainer.innerHTML = `Straight-line distance: ${(distance/1000).toFixed(2)} km`;
+            } else {
+                distanceContainer.innerHTML = `Straight-line distance: ${Math.round(distance)} meters`;
+            }
+            
+            // Calculate and display route
+            directionsService.route(
+                {
+                    origin: origin,
+                    destination: destination,
+                    travelMode: google.maps.TravelMode.DRIVING
+                },
+                (response, status) => {
+                    if (status === 'OK') {
+                        directionsRenderer.setDirections(response);
+                        
+                        // Get route distance (more accurate than straight-line)
+                        const route = response.routes[0];
+                        let routeDistance = 0;
+                        route.legs.forEach(leg => {
+                            routeDistance += leg.distance.value;
+                        });
+                        
+                        if (routeDistance > 1000) {
+                            distanceContainer.innerHTML += `<br>Driving distance: ${(routeDistance/1000).toFixed(2)} km`;
+                        } else {
+                            distanceContainer.innerHTML += `<br>Driving distance: ${Math.round(routeDistance)} meters`;
+                        }
+                    } else {
+                        console.error('Directions request failed due to ' + status);
+                        distanceContainer.innerHTML += '<br>Could not calculate route distance';
+                    }
+                }
+            );
+        }
+        
+        // Manual search button click
+        function searchLocation() {
+            const input = document.getElementById('search-input');
+            const query = input.value.trim();
+            if (!query) return;
+            
+            if (!currentPosition) {
+                alert("Please wait for your current location to be determined first.");
+                return;
+            }
+            
+            // Use Places API to find the location
+            const service = new google.maps.places.PlacesService(map);
+            service.textSearch(
+                {
+                    query: query,
+                    location: userMarker.getPosition(),
+                    radius: 50000 // Search within 50km radius
+                },
+                (results, status) => {
+                    if (status === google.maps.places.PlacesServiceStatus.OK && results[0]) {
+                        displaySearchedPlace(results[0]);
+                        input.value = results[0].name; // Update input with official name
+                    } else {
+                        alert("Location not found. Please try a different search term.");
+                    }
+                }
+            );
+        }
+        
+        // Initialize when page loads
+        window.onload = function() {
+            initMap();
+            getLocation();
+            
+            // Set up button event listeners
+            document.getElementById('start-tracking').addEventListener('click', startTracking);
+            document.getElementById('stop-tracking').addEventListener('click', stopTracking);
+            document.getElementById('search-btn').addEventListener('click', searchLocation);
+            
+            // Allow search on Enter key
+            document.getElementById('search-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchLocation();
+                }
+            });
+        };
+    </script>
+</body>
+</html>

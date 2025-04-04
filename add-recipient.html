@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Recipient - Zero Waste Kitchen</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation (same as dashboard) -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
+        <!-- Include the same navigation as in dashboard.html -->
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <!-- Sidebar (same as dashboard) -->
+            <div class="col-lg-2 d-none d-lg-block">
+                <!-- Include sidebar from dashboard.html -->
+            </div>
+
+            <!-- Add Recipient Content -->
+            <div class="col-lg-10">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 id="recipientFormTitle">Add New Recipient</h2>
+                    <a href="recipients.html" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Recipients
+                    </a>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Recipient Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="recipientForm">
+                            <input type="hidden" id="recipientId">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="recipientOrgName" class="form-label">Organization Name*</label>
+                                        <input type="text" class="form-control" id="recipientOrgName" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="recipientContact" class="form-label">Contact Person*</label>
+                                        <input type="text" class="form-control" id="recipientContact" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="recipientEmail" class="form-label">Email*</label>
+                                        <input type="email" class="form-control" id="recipientEmail" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="recipientPhone" class="form-label">Phone*</label>
+                                        <input type="tel" class="form-control" id="recipientPhone" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="recipientAddress" class="form-label">Address*</label>
+                                        <textarea class="form-control" id="recipientAddress" rows="3" required></textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="recipientType" class="form-label">Organization Type*</label>
+                                        <select class="form-select" id="recipientType" required>
+                                            <option value="">Select type</option>
+                                            <option value="shelter">Shelter</option>
+                                            <option value="charity">Charity</option>
+                                            <option value="community">Community Center</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-end mt-3">
+                                <button type="button" class="btn btn-secondary me-2" id="cancelRecipientBtn">Cancel</button>
+                                <button type="submit" class="btn btn-primary" id="submitRecipientBtn">Save Recipient</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/recipient-form.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

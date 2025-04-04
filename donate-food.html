@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donate Food - Zero Waste Kitchen</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #28a745;
+            --secondary-color: #6c757d;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .navbar {
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 0.75rem 1rem;
+            background-color: var(--primary-color) !important;
+        }
+        
+        .navbar-brand img {
+            height: 30px;
+        }
+        
+        .nav-link {
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.85) !important;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            color: white !important;
+        }
+        
+        .page-header {
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        .form-label {
+            font-weight: 500;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background-color: #218838;
+        }
+        
+        .food-image-preview {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 5px;
+            display: none;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="index.html">
+                <img src="images/logo-white.png" alt="Zero Waste Kitchen">
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="about.html">About</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle active" href="#" id="donorsDropdown" role="button" data-bs-toggle="dropdown">
+                            Donors
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="add-donor.html">Add Donor</a></li>
+                            <li><a class="dropdown-item active" href="donate-food.html">Donate Food</a></li>
+                            <li><a class="dropdown-item" href="donors.html">See Donor Details</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="recipientsDropdown" role="button" data-bs-toggle="dropdown">
+                            Recipients
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="add-recipient.html">Add Recipient</a></li>
+                            <li><a class="dropdown-item" href="request-food.html">Request Food</a></li>
+                            <li><a class="dropdown-item" href="recipients.html">See Recipient Details</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="profile.html">My Profile</a>
+                    </li>
+                </ul>
+                <div class="d-flex">
+                    <button class="btn btn-outline-light" id="logoutBtn">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="page-header d-flex justify-content-between align-items-center">
+                    <h2>Donate Food</h2>
+                    <a href="donors.html" class="btn btn-outline-secondary">Back to Donors</a>
+                </div>
+                
+                <div class="card">
+                    <div class="card-body">
+                        <form id="foodDonationForm">
+                            <div class="mb-3">
+                                <label for="donorSelect" class="form-label">Donor Organization</label>
+                                <select class="form-select" id="donorSelect" required>
+                                    <option value="" selected disabled>Select donor</option>
+                                    <option value="1">Green Restaurant</option>
+                                    <option value="2">City Bakery</option>
+                                    <option value="3">Fresh Market</option>
+                                </select>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="foodName" class="form-label">Food Name</label>
+                                    <input type="text" class="form-control" id="foodName" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="foodType" class="form-label">Food Type</label>
+                                    <select class="form-select" id="foodType" required>
+                                        <option value="" selected disabled>Select type</option>
+                                        <option value="vegetables">Vegetables</option>
+                                        <option value="fruits">Fruits</option>
+                                        <option value="dairy">Dairy</option>
+                                        <option value="bakery">Bakery</option>
+                                        <option value="meat">Meat</option>
+                                        <option value="prepared">Prepared Foods</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="quantity" class="form-label">Quantity</label>
+                                    <input type="number" class="form-control" id="quantity" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="unit" class="form-label">Unit</label>
+                                    <select class="form-select" id="unit" required>
+                                        <option value="kg">Kilograms (kg)</option>
+                                        <option value="lbs">Pounds (lbs)</option>
+                                        <option value="items">Items</option>
+                                        <option value="liters">Liters</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea class="form-control" id="description" rows="3"></textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="expiryDate" class="form-label">Expiry Date</label>
+                                <input type="date" class="form-control" id="expiryDate">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="foodImage" class="form-label">Food Image (Optional)</label>
+                                <input type="file" class="form-control" id="foodImage" accept="image/*">
+                                <img id="imagePreview" class="food-image-preview" src="#" alt="Food preview">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="pickupTime" class="form-label">Preferred Pickup Time</label>
+                                <input type="datetime-local" class="form-control" id="pickupTime" required>
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="button" class="btn btn-outline-secondary me-md-2">Cancel</button>
+                                <button type="submit" class="btn btn-primary">Donate Food</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Logout button
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                // Here you would typically clear the session/token
+                console.log('User logged out');
+                window.location.href = 'login.html';
+            });
+            
+            // Image preview
+            document.getElementById('foodImage').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const preview = document.getElementById('imagePreview');
+                        preview.src = e.target.result;
+                        preview.style.display = 'block';
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // Form submission
+            document.getElementById('foodDonationForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Here you would typically make an API call to your backend
+                console.log('Food donation form submitted');
+                
+                // For demo purposes, show success message and redirect
+                alert('Food donation submitted successfully! Recipients will be notified.');
+                window.location.href = 'donors.html';
+            });
+        });
+    </script>
+</body>
+</html>
